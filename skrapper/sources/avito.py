@@ -25,6 +25,15 @@ class AvitoSource(ListingSource):
 
     async def fetch(self, url: str) -> list[Listing]:
         response = await self.client.get(url)
+        if response.status_code == 429:
+            retry_after = response.headers.get("Retry-After")
+            logger.warning(
+                "Avito rate limit hit: 429 Too Many Requests. retry_after=%s url=%s",
+                retry_after or "unknown",
+                url,
+            )
+            return []
+
         response.raise_for_status()
 
         parser = HTMLParser(response.text)

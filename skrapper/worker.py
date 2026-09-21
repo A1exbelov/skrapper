@@ -31,7 +31,11 @@ class ListingWorker:
         self.user_agent = user_agent
 
     async def run_once(self) -> None:
-        headers = {"User-Agent": self.user_agent}
+        headers = {
+            "User-Agent": self.user_agent,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "ru-RU,ru;q=0.9,en;q=0.8",
+        }
         async with httpx.AsyncClient(
             timeout=self.http_timeout_seconds,
             headers=headers,
@@ -44,7 +48,11 @@ class ListingWorker:
 
     async def _process_search(self, search: SearchConfig, client: httpx.AsyncClient) -> None:
         source = AvitoSource(client)
-        listings = await source.fetch(str(search.url))
+        try:
+            listings = await source.fetch(str(search.url))
+        except httpx.HTTPError:
+            logger.warning("Search failed: search=%s url=%s", search.name, search.url, exc_info=True)
+            return
 
         sent_count = 0
         for listing in listings:
@@ -60,4 +68,3 @@ class ListingWorker:
             sent_count += 1
 
         logger.info("Processed search=%s fetched=%d sent=%d", search.name, len(listings), sent_count)
-
