@@ -1,0 +1,63 @@
+import logging
+
+import httpx
+from aiogram import Bot
+
+from skrapper.config import AppConfig, SearchConfig
+from skrapper.filters import matches_filters
+from skrapper.sources import AvitoSource
+from skrapper.storage import ListingStorage
+from skrapper.telegram import send_listing
+
+logger = logging.getLogger(__name__)
+
+
+class ListingWorker:
+    def __init__(
+        self,
+        *,
+        config: AppConfig,
+        storage: ListingStorage,
+        bot: Bot,
+        chat_id: str,
+        http_timeout_seconds: int,
+        user_agent: str,
+    ) -> None:
+        self.config = config
+        self.storage = storage
+        self.bot = bot
+        self.chat_id = chat_id
+        self.http_timeout_seconds = http_timeout_seconds
+        self.user_agent = user_agent
+
+    async def run_once(self) -> None:
+        headers = {"User-Agent": self.user_agent}
+        async with httpx.AsyncClient(
+            timeout=self.http_timeout_seconds,
+            headers=headers,
+            follow_redirects=True,
+        ) as client:
+            for search in self.config.searches:
+                if not search.enabled:
+                    continue
+                await self._process_search(search, client)
+
+    async def _process_search(self, search: SearchConfig, client: httpx.AsyncClient) -> None:
+        source = AvitoSource(client)
+        listings = await source.fetch(str(search.url))
+
+        sent_count = 0
+        for listing in listings:
+            if sent_count >= self.config.notification.max_items_per_run:
+                break
+            if self.storage.is_seen(listing):
+                continue
+            self.storage.mark_seen(listing)
+            if not matches_filters(listing, search.filters):
+                continue
+
+            await send_listing(self.bot, self.chat_id, listing)
+            sent_count += 1
+
+        logger.info("Processed search=%s fetched=%d sent=%d", search.name, len(listings), sent_count)
+

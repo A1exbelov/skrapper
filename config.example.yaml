@@ -1,0 +1,18 @@
+searches:
+  - name: avito_moscow_rent
+    source: avito
+    url: "https://www.avito.ru/moskva/kvartiry/sdam/na_dlitelnyy_srok-ASgBAgICAUSSA8gQ"
+    enabled: true
+    filters:
+      min_price: 50000
+      max_price: 120000
+      rooms: [1, 2]
+      include_keywords:
+        - метро
+      exclude_keywords:
+        - апартаменты
+        - комиссия 100
+
+notification:
+  max_items_per_run: 10
+
