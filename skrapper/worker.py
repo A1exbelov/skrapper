@@ -61,11 +61,17 @@ class ListingWorker:
                 break
             if self.storage.is_seen(listing):
                 continue
-            self.storage.mark_seen(listing)
             if not matches_filters(listing, search.filters):
+                self.storage.mark_seen(listing)
                 continue
 
-            await send_listing(self.bot, self.chat_id, listing)
+            if not await send_listing(self.bot, self.chat_id, listing):
+                logger.warning(
+                    "Stopping notifications for search=%s until Telegram delivery is fixed",
+                    search.name,
+                )
+                break
+            self.storage.mark_seen(listing)
             sent_count += 1
 
         logger.info("Processed search=%s fetched=%d sent=%d", search.name, len(listings), sent_count)

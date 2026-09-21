@@ -1,8 +1,12 @@
+import logging
 from html import escape
 
 from aiogram import Bot
+from aiogram.exceptions import TelegramAPIError
 
 from skrapper.models import Listing
+
+logger = logging.getLogger(__name__)
 
 
 def format_listing_message(listing: Listing) -> str:
@@ -23,7 +27,16 @@ def format_listing_message(listing: Listing) -> str:
     return "\n".join(lines)
 
 
-async def send_listing(bot: Bot, chat_id: str, listing: Listing) -> None:
+async def send_listing(bot: Bot, chat_id: str, listing: Listing) -> bool:
     text = format_listing_message(listing)
-    await bot.send_message(chat_id=chat_id, text=text, parse_mode="HTML", disable_web_page_preview=False)
-
+    try:
+        await bot.send_message(
+            chat_id=chat_id,
+            text=text,
+            parse_mode="HTML",
+            disable_web_page_preview=False,
+        )
+    except TelegramAPIError:
+        logger.warning("Failed to send Telegram listing message. chat_id=%s", chat_id, exc_info=True)
+        return False
+    return True
