@@ -15,7 +15,7 @@ class ListingFilters(BaseModel):
 
 class SearchConfig(BaseModel):
     name: str
-    source: Literal["avito"]
+    source: Literal["avito", "cian", "domclick", "rss"]
     url: HttpUrl
     enabled: bool = True
     filters: ListingFilters = Field(default_factory=ListingFilters)
@@ -37,4 +37,3 @@ def load_config(path: Path) -> AppConfig:
     with path.open("r", encoding="utf-8") as file:
         raw = yaml.safe_load(file) or {}
     return AppConfig.model_validate(raw)
-

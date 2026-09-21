@@ -48,21 +48,31 @@ Each search has a `source`, a public search `url`, and filters:
 
 ```yaml
 searches:
-  - name: avito_moscow_rent
+  - name: avito_saratov_sale
     source: avito
-    url: "https://www.avito.ru/..."
+    url: "https://www.avito.ru/saratov/kvartiry/prodam-ASgBAgICAUSSA8YQ"
     enabled: true
     filters:
-      min_price: 50000
-      max_price: 120000
-      rooms: [1, 2]
-      include_keywords: ["метро"]
-      exclude_keywords: ["апартаменты"]
+      min_price: 4000000
+      max_price: 7000000
+      rooms: []
+      include_keywords: []
+      exclude_keywords: []
 ```
+
+Supported sources:
+
+- `avito`
+- `cian`
+- `domclick`
+- `rss`
+
+Keep extra sources as `enabled: false` until their URLs are tuned and tested. Direct HTML
+parsers can break when a platform changes markup or rate-limits traffic; RSS/API-like sources
+are usually more stable.
 
 ## Notes
 
 Use official APIs where available and keep polling intervals conservative. Some classified
 platforms actively limit automated collection, so source parsers should be treated as adapters
 that may need maintenance.
-

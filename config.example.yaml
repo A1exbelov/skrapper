@@ -10,5 +10,38 @@ searches:
       include_keywords: []
       exclude_keywords: []
 
+  - name: cian_saratov_sale
+    source: cian
+    url: "https://saratov.cian.ru/kupit-kvartiru/"
+    enabled: false
+    filters:
+      min_price: 4000000
+      max_price: 7000000
+      rooms: []
+      include_keywords: []
+      exclude_keywords: []
+
+  - name: domclick_saratov_sale
+    source: domclick
+    url: "https://domclick.ru/search?deal_type=sale&category=living&offer_type=flat&address=Саратов"
+    enabled: false
+    filters:
+      min_price: 4000000
+      max_price: 7000000
+      rooms: []
+      include_keywords: []
+      exclude_keywords: []
+
+  - name: custom_feed
+    source: rss
+    url: "https://example.com/feed.xml"
+    enabled: false
+    filters:
+      min_price: 4000000
+      max_price: 7000000
+      rooms: []
+      include_keywords: []
+      exclude_keywords: []
+
 notification:
   max_items_per_run: 10

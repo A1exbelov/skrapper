@@ -5,7 +5,8 @@ from aiogram import Bot
 
 from skrapper.config import AppConfig, SearchConfig
 from skrapper.filters import matches_filters
-from skrapper.sources import AvitoSource
+from skrapper.sources import AvitoSource, CianSource, DomclickSource, RssSource
+from skrapper.sources.base import ListingSource
 from skrapper.storage import ListingStorage
 from skrapper.telegram import send_listing
 
@@ -47,7 +48,7 @@ class ListingWorker:
                 await self._process_search(search, client)
 
     async def _process_search(self, search: SearchConfig, client: httpx.AsyncClient) -> None:
-        source = AvitoSource(client)
+        source = build_source(search, client)
         try:
             listings = await source.fetch(str(search.url))
         except httpx.HTTPError:
@@ -68,3 +69,15 @@ class ListingWorker:
             sent_count += 1
 
         logger.info("Processed search=%s fetched=%d sent=%d", search.name, len(listings), sent_count)
+
+
+def build_source(search: SearchConfig, client: httpx.AsyncClient) -> ListingSource:
+    if search.source == "avito":
+        return AvitoSource(client)
+    if search.source == "cian":
+        return CianSource(client)
+    if search.source == "domclick":
+        return DomclickSource(client)
+    if search.source == "rss":
+        return RssSource(client)
+    raise ValueError(f"Unsupported source: {search.source}")
