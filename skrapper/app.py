@@ -46,6 +46,14 @@ async def run() -> None:
         await worker.run_once()
         await message.answer("Проверка завершена.")
 
+    @dispatcher.message(Command("chatid"))
+    async def chatid(message: Message) -> None:
+        await message.answer(f"chat_id: <code>{message.chat.id}</code>", parse_mode="HTML")
+
+    @dispatcher.message()
+    async def fallback(message: Message) -> None:
+        await message.answer("Команды: /start, /chatid, /check")
+
     scheduler = AsyncIOScheduler(timezone="UTC")
     scheduler.add_job(worker.run_once, "interval", seconds=settings.check_interval_seconds)
     scheduler.start()
@@ -75,4 +83,3 @@ async def run() -> None:
 
     scheduler.shutdown(wait=False)
     await bot.session.close()
-
