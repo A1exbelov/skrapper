@@ -1,18 +1,14 @@
 searches:
-  - name: avito_moscow_rent
+  - name: avito_saratov_sale
     source: avito
-    url: "https://www.avito.ru/moskva/kvartiry/sdam/na_dlitelnyy_srok-ASgBAgICAUSSA8gQ"
+    url: "https://www.avito.ru/saratov/kvartiry/prodam-ASgBAgICAUSSA8YQ"
     enabled: true
     filters:
-      min_price: 50000
-      max_price: 120000
-      rooms: [1, 2]
-      include_keywords:
-        - метро
-      exclude_keywords:
-        - апартаменты
-        - комиссия 100
+      min_price: 4000000
+      max_price: 7000000
+      rooms: []
+      include_keywords: []
+      exclude_keywords: []
 
 notification:
   max_items_per_run: 10
-
