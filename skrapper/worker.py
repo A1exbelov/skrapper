@@ -6,7 +6,18 @@ from aiogram import Bot
 
 from skrapper.config import AppConfig, SearchConfig
 from skrapper.filters import matches_filters
-from skrapper.sources import AvitoSource, CianSource, DomclickSource, RssSource
+from skrapper.sources import (
+    AkulaSource,
+    AvitoSource,
+    CianSource,
+    DomclickSource,
+    GdeEtotDomSource,
+    N1Source,
+    RssSource,
+    SaratovNedvizhimostSource,
+    YandexRealtySource,
+    YoulaSource,
+)
 from skrapper.sources.base import ListingSource
 from skrapper.storage import ListingStorage
 from skrapper.telegram import send_listing
@@ -181,6 +192,18 @@ def build_source(search: SearchConfig, client: httpx.AsyncClient) -> ListingSour
         return CianSource(client)
     if search.source == "domclick":
         return DomclickSource(client)
+    if search.source == "yandex":
+        return YandexRealtySource(client)
+    if search.source == "youla":
+        return YoulaSource(client)
+    if search.source == "n1":
+        return N1Source(client)
+    if search.source == "gdeetotdom":
+        return GdeEtotDomSource(client)
+    if search.source == "akula":
+        return AkulaSource(client)
+    if search.source == "saratov_nedvizhimost":
+        return SaratovNedvizhimostSource(client)
     if search.source == "rss":
         return RssSource(client)
     raise ValueError(f"Unsupported source: {search.source}")

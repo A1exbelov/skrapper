@@ -66,6 +66,12 @@ Supported sources:
 - `avito`
 - `cian`
 - `domclick`
+- `yandex`
+- `youla`
+- `n1`
+- `gdeetotdom`
+- `akula`
+- `saratov_nedvizhimost`
 - `rss`
 
 Keep extra sources as `enabled: false` until their URLs are tuned and tested. Direct HTML

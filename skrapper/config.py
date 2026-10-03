@@ -15,7 +15,18 @@ class ListingFilters(BaseModel):
 
 class SearchConfig(BaseModel):
     name: str
-    source: Literal["avito", "cian", "domclick", "rss"]
+    source: Literal[
+        "avito",
+        "cian",
+        "domclick",
+        "yandex",
+        "youla",
+        "n1",
+        "gdeetotdom",
+        "akula",
+        "saratov_nedvizhimost",
+        "rss",
+    ]
     url: HttpUrl
     enabled: bool = True
     filters: ListingFilters = Field(default_factory=ListingFilters)

@@ -32,6 +32,72 @@ searches:
       include_keywords: []
       exclude_keywords: []
 
+  - name: yandex_saratov_sale
+    source: yandex
+    url: "https://realty.yandex.ru/saratov/kupit/kvartira/"
+    enabled: true
+    filters:
+      min_price: 4000000
+      max_price: 7000000
+      rooms: []
+      include_keywords: []
+      exclude_keywords: []
+
+  - name: youla_saratov_sale
+    source: youla
+    url: "https://youla.ru/saratov/nedvijimost/prodaja-kvartiri"
+    enabled: true
+    filters:
+      min_price: 4000000
+      max_price: 7000000
+      rooms: []
+      include_keywords: []
+      exclude_keywords: []
+
+  - name: n1_saratov_sale
+    source: n1
+    url: "https://saratov-1.n1.ru/kupit/kvartiry/"
+    enabled: true
+    filters:
+      min_price: 4000000
+      max_price: 7000000
+      rooms: []
+      include_keywords: []
+      exclude_keywords: []
+
+  - name: gdeetotdom_saratov_sale
+    source: gdeetotdom
+    url: "https://saratov.gdeetotdom.ru/"
+    enabled: true
+    filters:
+      min_price: 4000000
+      max_price: 7000000
+      rooms: []
+      include_keywords: []
+      exclude_keywords: []
+
+  - name: akula_saratov_sale
+    source: akula
+    url: "https://saratov.akula.com/prodaja/kvartira/"
+    enabled: true
+    filters:
+      min_price: 4000000
+      max_price: 7000000
+      rooms: []
+      include_keywords: []
+      exclude_keywords: []
+
+  - name: saratov_nedvizhimost_sale
+    source: saratov_nedvizhimost
+    url: "https://saratov-nedvizhimost.ru/kvartiry/prodam/"
+    enabled: true
+    filters:
+      min_price: 4000000
+      max_price: 7000000
+      rooms: []
+      include_keywords: []
+      exclude_keywords: []
+
   - name: custom_feed
     source: rss
     url: "https://example.com/feed.xml"
