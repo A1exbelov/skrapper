@@ -3,6 +3,12 @@ from skrapper.sources.generic_html import GenericHtmlSource
 
 class DomclickSource(GenericHtmlSource):
     source_name = "domclick"
+    url_markers = (
+        "/card/",
+        "/offers/",
+        "domclick.ru/card/",
+        "domclick.ru/offers/",
+    )
     card_selectors = (
         '[data-testid*="offer"]',
         '[class*="card"]',

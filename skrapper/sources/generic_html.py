@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class GenericHtmlSource(ListingSource):
     source_name = "html"
+    url_markers: tuple[str, ...] = ()
     card_selectors: tuple[str, ...] = ()
     title_selectors: tuple[str, ...] = ("a", "h2", "h3")
     price_selectors: tuple[str, ...] = ()
@@ -50,6 +51,20 @@ class GenericHtmlSource(ListingSource):
         if json_ld_listings:
             logger.info("Parsed %d %s listings from JSON-LD", len(json_ld_listings), self.source_name)
             return json_ld_listings
+
+        embedded_json_listings = parse_embedded_json_listings(
+            response.text,
+            url,
+            self.source_name,
+            self.url_markers,
+        )
+        if embedded_json_listings:
+            logger.info(
+                "Parsed %d %s listings from embedded JSON",
+                len(embedded_json_listings),
+                self.source_name,
+            )
+            return embedded_json_listings
 
         title = parser.css_first("title")
         logger.warning(
@@ -189,6 +204,145 @@ def listing_from_json_ld(data: dict, base_url: str, source_name: str) -> Listing
         description=clean_text(data.get("description", "")) or None,
         image_url=json_ld_image(data, base_url),
     )
+
+
+def parse_embedded_json_listings(
+    html: str,
+    base_url: str,
+    source_name: str,
+    url_markers: tuple[str, ...],
+) -> list[Listing]:
+    if not url_markers:
+        return []
+
+    parser = HTMLParser(html)
+    listings: dict[str, Listing] = {}
+    for script in parser.css("script"):
+        raw = script.text()
+        if not raw or not any(marker in raw for marker in url_markers):
+            continue
+        for data in possible_json_values(raw):
+            for node in walk_json(data):
+                if not isinstance(node, dict):
+                    continue
+                listing = listing_from_embedded_json(node, base_url, source_name, url_markers)
+                if listing is not None:
+                    listings.setdefault(listing.stable_key, listing)
+    return list(listings.values())
+
+
+def possible_json_values(raw: str) -> list[object]:
+    candidates = [raw.strip()]
+    assignment_match = re.search(r"=\s*({.*})\s*;?\s*$", raw.strip(), re.DOTALL)
+    if assignment_match:
+        candidates.append(assignment_match.group(1))
+
+    values = []
+    for candidate in candidates:
+        if not candidate.startswith(("{", "[")):
+            continue
+        try:
+            values.append(json.loads(candidate))
+        except json.JSONDecodeError:
+            continue
+    return values
+
+
+def listing_from_embedded_json(
+    data: dict,
+    base_url: str,
+    source_name: str,
+    url_markers: tuple[str, ...],
+) -> Listing | None:
+    raw_url = first_text(data, ("url", "href", "uri", "link", "canonicalUrl", "fullUrl"))
+    title = first_text(data, ("title", "name", "header", "displayTitle", "seoTitle"))
+    if not raw_url or not title:
+        return None
+    if not any(marker in raw_url for marker in url_markers):
+        return None
+
+    absolute_url = urljoin(base_url, raw_url)
+    price = first_price(data)
+    description = first_text(data, ("description", "text", "subtitle", "snippet"))
+
+    return Listing(
+        external_id=extract_external_id(absolute_url),
+        source=source_name,
+        title=clean_text(title),
+        url=absolute_url,
+        price=price,
+        rooms=parse_rooms(" ".join(part for part in [title, description or ""] if part)),
+        location=first_location(data),
+        description=description,
+        image_url=first_image(data, base_url),
+    )
+
+
+def first_text(data: dict, keys: tuple[str, ...]) -> str | None:
+    for key in keys:
+        value = data.get(key)
+        if isinstance(value, str) and value.strip():
+            return clean_text(value)
+        if isinstance(value, (int, float)):
+            return str(value)
+    return None
+
+
+def first_price(data: dict) -> int | None:
+    for key in ("price", "priceValue", "cost", "amount"):
+        value = data.get(key)
+        if isinstance(value, dict):
+            nested = first_price(value)
+            if nested is not None:
+                return nested
+        if isinstance(value, (int, float)):
+            return int(value)
+        if isinstance(value, str):
+            parsed = parse_price(value)
+            if parsed is not None:
+                return parsed
+    return None
+
+
+def first_location(data: dict) -> str | None:
+    for key in ("location", "address", "geo", "undergrounds"):
+        value = data.get(key)
+        if isinstance(value, str) and value.strip():
+            return clean_text(value)
+        if isinstance(value, dict):
+            text = first_text(value, ("title", "name", "address", "fullName"))
+            if text:
+                return text
+        if isinstance(value, list):
+            names = []
+            for item in value[:3]:
+                if isinstance(item, dict):
+                    text = first_text(item, ("title", "name"))
+                    if text:
+                        names.append(text)
+            if names:
+                return ", ".join(names)
+    return None
+
+
+def first_image(data: dict, base_url: str) -> str | None:
+    for key in ("image", "imageUrl", "photo", "photos", "images"):
+        value = data.get(key)
+        if isinstance(value, str) and value.startswith(("http", "/")):
+            return urljoin(base_url, value)
+        if isinstance(value, dict):
+            text = first_text(value, ("url", "src", "fullUrl"))
+            if text and text.startswith(("http", "/")):
+                return urljoin(base_url, text)
+        if isinstance(value, list):
+            for item in value:
+                if isinstance(item, str) and item.startswith(("http", "/")):
+                    return urljoin(base_url, item)
+                if isinstance(item, dict):
+                    text = first_text(item, ("url", "src", "fullUrl"))
+                    if text and text.startswith(("http", "/")):
+                        return urljoin(base_url, text)
+    return None
 
 
 def json_ld_location(data: dict) -> str | None:

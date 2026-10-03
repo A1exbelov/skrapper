@@ -43,8 +43,32 @@ async def run() -> None:
     @dispatcher.message(Command("check"))
     async def check(message: Message) -> None:
         await message.answer("Проверяю объявления...")
-        await worker.run_once()
-        await message.answer("Проверка завершена.")
+        results = await worker.run_once()
+        await message.answer(format_run_results(results))
+
+    @dispatcher.message(Command("status"))
+    async def status(message: Message) -> None:
+        stats = storage.stats()
+        states = storage.list_search_states()
+        lines = [
+            "Статус:",
+            f"объявлений в базе: {stats['listings_count']}",
+            f"отправлено уведомлений: {stats['notified_count']}",
+            f"прогрето поисков: {stats['bootstrapped_count']}",
+        ]
+        if states:
+            lines.append("")
+            lines.append("Источники:")
+            for state in states:
+                status_text = "прогрет" if state.bootstrapped else "ждет прогрева"
+                error_text = f", ошибка: {state.last_error}" if state.last_error else ""
+                lines.append(
+                    f"{state.name}: {status_text}, найдено {state.last_fetched_count}, "
+                    f"отправлено {state.last_sent_count}{error_text}"
+                )
+        await message.answer(
+            "\n".join(lines)
+        )
 
     @dispatcher.message(Command("chatid"))
     async def chatid(message: Message) -> None:
@@ -52,10 +76,16 @@ async def run() -> None:
 
     @dispatcher.message()
     async def fallback(message: Message) -> None:
-        await message.answer("Команды: /start, /chatid, /check")
+        await message.answer("Команды: /start, /chatid, /check, /status")
 
     scheduler = AsyncIOScheduler(timezone="UTC")
-    scheduler.add_job(worker.run_once, "interval", seconds=settings.check_interval_seconds)
+    scheduler.add_job(
+        worker.run_once,
+        "interval",
+        seconds=settings.check_interval_seconds,
+        coalesce=True,
+        max_instances=1,
+    )
     scheduler.start()
 
     await worker.run_once()
@@ -83,3 +113,19 @@ async def run() -> None:
 
     scheduler.shutdown(wait=False)
     await bot.session.close()
+
+
+def format_run_results(results) -> str:
+    if not results:
+        return "Проверка завершена: активных источников нет."
+
+    lines = ["Проверка завершена:"]
+    for result in results:
+        if result.error:
+            lines.append(f"{result.name}: ошибка ({result.error})")
+            continue
+        suffix = " первичная синхронизация, без рассылки" if result.skipped_initial_sync else ""
+        lines.append(
+            f"{result.name}: найдено {result.fetched}, новых {result.new}, отправлено {result.sent}.{suffix}"
+        )
+    return "\n".join(lines)

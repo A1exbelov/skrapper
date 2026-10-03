@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,6 +26,26 @@ class Listing:
         return f"{self.source}:{self.external_id}"
 
     @property
+    def normalized_url(self) -> str:
+        parsed = urlsplit(self.url)
+        query = urlencode(
+            [
+                (key, value)
+                for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+                if not key.lower().startswith(("utm_", "yclid", "gclid", "fbclid"))
+            ],
+            doseq=True,
+        )
+        return urlunsplit((parsed.scheme, parsed.netloc.lower(), parsed.path.rstrip("/"), query, ""))
+
+    @property
+    def fingerprint(self) -> str:
+        price = str(self.price or "")
+        rooms = str(self.rooms or "")
+        location = (self.location or "").casefold()
+        title = self.title.casefold()
+        return "|".join(part.strip() for part in [self.source, title, price, rooms, location])
+
+    @property
     def published_or_now(self) -> datetime:
         return self.published_at or datetime.now(timezone.utc)
-

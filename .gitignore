@@ -1,5 +1,6 @@
 .env
 config.yaml
+.idea/
 .venv/
 __pycache__/
 *.py[cod]

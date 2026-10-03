@@ -7,7 +7,8 @@ Telegram bot that checks apartment listing pages and sends new matching ads to a
 - Polls configured search URLs on a schedule.
 - Normalizes listings from source-specific parsers.
 - Filters by price, rooms, include keywords, and exclude keywords.
-- Stores seen listing IDs locally to avoid duplicate Telegram messages.
+- Stores seen listings locally to avoid duplicate Telegram messages.
+- Performs a first-run baseline sync per search, so existing listings are not spammed.
 - Sends compact Telegram notifications with title, price, location, and link.
 
 ## Quick start
@@ -70,6 +71,18 @@ Supported sources:
 Keep extra sources as `enabled: false` until their URLs are tuned and tested. Direct HTML
 parsers can break when a platform changes markup or rate-limits traffic; RSS/API-like sources
 are usually more stable.
+
+## Fresh listings only
+
+Each enabled search has its own bootstrap state in SQLite. On the first successful fetch for a
+search, Skrapper saves the current listings without sending them. After that baseline is done,
+only listings that were not observed before are eligible for Telegram notifications.
+
+Useful bot commands:
+
+- `/check` runs all enabled searches now and reports fetched/new/sent counts.
+- `/status` shows stored listing counts and per-search health.
+- `/chatid` prints the chat id that should be used in `.env`.
 
 ## Notes
 

@@ -3,6 +3,12 @@ from skrapper.sources.generic_html import GenericHtmlSource
 
 class CianSource(GenericHtmlSource):
     source_name = "cian"
+    url_markers = (
+        "/sale/flat/",
+        "/rent/flat/",
+        "cian.ru/sale/flat/",
+        "cian.ru/rent/flat/",
+    )
     card_selectors = (
         '[data-name="CardComponent"]',
         '[data-testid="offer-card"]',
