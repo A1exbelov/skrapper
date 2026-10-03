@@ -27,6 +27,14 @@ class GenericHtmlSource(ListingSource):
 
     async def fetch(self, url: str) -> list[Listing]:
         response = await self.client.get(url)
+        if response.status_code in {401, 403}:
+            logger.warning(
+                "%s requires authorization or blocked request: status=%s url=%s",
+                self.source_name,
+                response.status_code,
+                url,
+            )
+            return []
         if response.status_code == 429:
             retry_after = response.headers.get("Retry-After")
             logger.warning(
@@ -36,13 +44,24 @@ class GenericHtmlSource(ListingSource):
                 url,
             )
             return []
-        if response.status_code in {403, 503}:
+        if response.status_code == 503:
             logger.warning("%s blocked or unavailable: status=%s url=%s", self.source_name, response.status_code, url)
             return []
 
         response.raise_for_status()
 
         parser = HTMLParser(response.text)
+        title = parser.css_first("title")
+        page_title = clean_text(title.text()) if title else ""
+        if is_antibot_page(page_title, str(response.url), response.text):
+            logger.warning(
+                "%s returned an anti-bot page. title=%r url=%s",
+                self.source_name,
+                page_title,
+                response.url,
+            )
+            return []
+
         listings = self._parse_cards(parser, url)
         if listings:
             return listings
@@ -66,11 +85,10 @@ class GenericHtmlSource(ListingSource):
             )
             return embedded_json_listings
 
-        title = parser.css_first("title")
         logger.warning(
             "%s returned no listing cards. title=%r",
             self.source_name,
-            clean_text(title.text()) if title else "",
+            page_title,
         )
         return []
 
@@ -146,6 +164,17 @@ def extract_external_id(url: str) -> str:
     path = urlparse(url).path.rstrip("/")
     match = re.search(r"(\d+)(?:/)?$", path)
     return match.group(1) if match else path
+
+
+def is_antibot_page(title: str, url: str, html: str) -> bool:
+    title_lower = title.casefold()
+    url_lower = url.casefold()
+    if "captcha" in url_lower or "showcaptcha" in url_lower:
+        return True
+    if "вы не робот" in title_lower or "not a robot" in title_lower:
+        return True
+    preview = html[:5000].casefold()
+    return "showcaptcha" in preview or "captcha" in preview and "robot" in preview
 
 
 def parse_json_ld_listings(html: str, base_url: str, source_name: str) -> list[Listing]:
