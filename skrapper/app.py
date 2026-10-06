@@ -9,6 +9,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from skrapper.config import load_config
 from skrapper.settings import Settings
+from skrapper.sources.email_alerts import EmailImapSettings
 from skrapper.storage import ListingStorage
 from skrapper.worker import ListingWorker
 
@@ -34,6 +35,13 @@ async def run() -> None:
         chat_id=settings.telegram_chat_id,
         http_timeout_seconds=settings.http_timeout_seconds,
         user_agent=settings.user_agent,
+        email_imap_settings=EmailImapSettings(
+            host=settings.email_imap_host,
+            port=settings.email_imap_port,
+            username=settings.email_imap_username,
+            password=settings.email_imap_password,
+            use_ssl=settings.email_imap_use_ssl,
+        ),
     )
 
     @dispatcher.message(Command("start"))

@@ -74,6 +74,34 @@ Supported sources:
 - `saratov_nedvizhimost`
 - `rss`
 
+## Email Alerts
+
+Some platforms block direct scraping with CAPTCHA or authorization. For those sources, use their
+own saved-search notifications and let Skrapper read those emails over IMAP.
+
+1. Create a separate mailbox for listing alerts.
+2. Save searches on Cian, Domclick, Yandex Realty, Avito, and other platforms.
+3. Enable email notifications for those saved searches.
+4. Fill IMAP settings in `.env`:
+
+```text
+EMAIL_IMAP_HOST=imap.example.com
+EMAIL_IMAP_PORT=993
+EMAIL_IMAP_USERNAME=flat.alerts@example.com
+EMAIL_IMAP_PASSWORD=app-password
+EMAIL_IMAP_USE_SSL=true
+```
+
+5. Enable the source in `config.yaml`:
+
+```yaml
+email_alerts:
+  enabled: true
+```
+
+The first successful email scan is also a baseline sync: existing emails are saved without
+Telegram spam, and later matching emails become notifications.
+
 Keep extra sources as `enabled: false` until their URLs are tuned and tested. Direct HTML
 parsers can break when a platform changes markup or rate-limits traffic; RSS/API-like sources
 are usually more stable.

@@ -109,5 +109,17 @@ searches:
       include_keywords: []
       exclude_keywords: []
 
+email_alerts:
+  name: email_alerts
+  enabled: false
+  mailbox: INBOX
+  limit: 50
+  filters:
+    min_price: 4000000
+    max_price: 7000000
+    rooms: []
+    include_keywords: []
+    exclude_keywords: []
+
 notification:
   max_items_per_run: 10

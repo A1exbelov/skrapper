@@ -5,7 +5,6 @@ class N1Source(GenericHtmlSource):
     source_name = "n1"
     url_markers = (
         "/view/",
-        "/kupit/kvartiry/",
         "saratov-1.n1.ru/view/",
     )
     card_selectors = (

@@ -17,4 +17,8 @@ class Settings(BaseSettings):
         "Mozilla/5.0 (compatible; SkrapperApartmentBot/0.1)",
         alias="USER_AGENT",
     )
-
+    email_imap_host: str | None = Field(None, alias="EMAIL_IMAP_HOST")
+    email_imap_port: int = Field(993, alias="EMAIL_IMAP_PORT")
+    email_imap_username: str | None = Field(None, alias="EMAIL_IMAP_USERNAME")
+    email_imap_password: str | None = Field(None, alias="EMAIL_IMAP_PASSWORD")
+    email_imap_use_ssl: bool = Field(True, alias="EMAIL_IMAP_USE_SSL")

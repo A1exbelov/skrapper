@@ -36,8 +36,17 @@ class NotificationConfig(BaseModel):
     max_items_per_run: int = 10
 
 
+class EmailAlertConfig(BaseModel):
+    name: str = "email_alerts"
+    enabled: bool = False
+    mailbox: str = "INBOX"
+    limit: int = 50
+    filters: ListingFilters = Field(default_factory=ListingFilters)
+
+
 class AppConfig(BaseModel):
     searches: list[SearchConfig] = Field(default_factory=list)
+    email_alerts: EmailAlertConfig = Field(default_factory=EmailAlertConfig)
     notification: NotificationConfig = Field(default_factory=NotificationConfig)
 
 
