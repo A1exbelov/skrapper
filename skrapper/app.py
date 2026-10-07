@@ -120,6 +120,7 @@ async def run() -> None:
         task.result()
 
     scheduler.shutdown(wait=False)
+    await worker.close()
     await bot.session.close()
 
 

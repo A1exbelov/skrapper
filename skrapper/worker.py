@@ -57,26 +57,40 @@ class ListingWorker:
         self.http_timeout_seconds = http_timeout_seconds
         self.user_agent = user_agent
         self.email_imap_settings = email_imap_settings
+        self._client: httpx.AsyncClient | None = None
 
     async def run_once(self) -> list[SearchRunResult]:
+        client = self._get_client()
+        results: list[SearchRunResult] = []
+        for search in self.config.searches:
+            if not search.enabled:
+                continue
+            results.append(await self._process_search(search, client))
+        if self.config.email_alerts.enabled:
+            results.append(await self._process_email_alerts())
+        return results
+
+    async def close(self) -> None:
+        if self._client is not None:
+            await self._client.aclose()
+            self._client = None
+
+    def _get_client(self) -> httpx.AsyncClient:
+        if self._client is not None and not self._client.is_closed:
+            return self._client
+
         headers = {
             "User-Agent": self.user_agent,
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "ru-RU,ru;q=0.9,en;q=0.8",
         }
-        results: list[SearchRunResult] = []
-        async with httpx.AsyncClient(
+        self._client = httpx.AsyncClient(
             timeout=self.http_timeout_seconds,
             headers=headers,
             follow_redirects=True,
-        ) as client:
-            for search in self.config.searches:
-                if not search.enabled:
-                    continue
-                results.append(await self._process_search(search, client))
-        if self.config.email_alerts.enabled:
-            results.append(await self._process_email_alerts())
-        return results
+            limits=httpx.Limits(max_connections=10, max_keepalive_connections=5),
+        )
+        return self._client
 
     async def _process_search(self, search: SearchConfig, client: httpx.AsyncClient) -> SearchRunResult:
         source = build_source(search, client)
